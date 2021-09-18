@@ -4,6 +4,7 @@ var canvas = null;
 var ctx = null;
 var bounds = null;
 var selectedBox = null;
+var editBox = null;
 var panX = 0; // "Pan" é o local do canvas infinito sendo mostrado na tela
 var panY = 0;
 var mouseX = 0; // Coordenadas do mouse
@@ -11,9 +12,7 @@ var mouseY = 0;
 var oldMouseX = 0; //Coordenadas anteriores do mouse
 var oldMouseY = 0;
 var mouseHeld = false;
-var mouseOldHeld = false;
 var boxArray = []; //Array onde vão ficar os elementos
-var doubleClick = false;
 
 function DraggableBox(x,y,width,height,text){ //Elemento sendo usado para testes, caixa arrastável
     this.x = x;
@@ -22,6 +21,7 @@ function DraggableBox(x,y,width,height,text){ //Elemento sendo usado para testes
 	this.height = height;
 	this.text = text;
 	this.isSelected = false;
+    this.isEdit = false;
 }
 
 DraggableBox.prototype.isCollidingWidthPoint = function(x,y){ //Função para detectar se o mouse está em cima do elemento
@@ -48,7 +48,6 @@ DraggableBox.prototype.draw = function() { //Renderização do elemento
 
 window.onmousedown = function(e){ //O que acontece ao segurar o mouse
     mouseHeld = true;
-    mouseOldHeld = true;
     if (!selectedBox){
         for (var i = boxArray.length - 1; i > -1; --i){
             if (boxArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){ //Detectando se o mouse colide com algum elemento
@@ -59,16 +58,21 @@ window.onmousedown = function(e){ //O que acontece ao segurar o mouse
             }
         }
     }
-    setTimeout(function(){ //TEMP
-        if(mouseHeld==false){
-            setTimeout(function(){
-                if(mouseOldHeld==true){
-                    console.log('FOI');
-                };
-            }, 600);
-        };
-        console.log(mouseHeld);
-    },100);
+}
+
+window.ondblclick = function(e){
+    if (!editBox){
+        for (var i = boxArray.length - 1; i > -1; --i){
+            if (boxArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){ //Detectando se o mouse colide com algum elemento
+                editBox = boxArray[i];
+                editBox.isEdit = true;
+                editBox.text = "Editado";
+                console.log(editBox);
+                return;
+            }
+        }
+    }
+    console.log(editBox);
 }
 
 window.onmousemove = function(e){ //O que acontece ao mover o mouse
@@ -90,13 +94,14 @@ window.onmousemove = function(e){ //O que acontece ao mover o mouse
 
 window.onmouseup = function(e){ //O que acontece quando solta o mouse
     mouseHeld = false;
-    setTimeout(function(){
-        mouseOldHeld = false;
-    }, 500);
     if (selectedBox){
         selectedBox.isSelected = false;
         selectedBox = null;
         requestAnimationFrame(draw);
+    }
+    if (editBox){
+        editBox.isEdit = false;
+        editBox = null;
     }
 }
 
