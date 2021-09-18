@@ -11,7 +11,9 @@ var mouseY = 0;
 var oldMouseX = 0; //Coordenadas anteriores do mouse
 var oldMouseY = 0;
 var mouseHeld = false;
+var mouseOldHeld = false;
 var boxArray = []; //Array onde vão ficar os elementos
+var doubleClick = false;
 
 function DraggableBox(x,y,width,height,text){ //Elemento sendo usado para testes, caixa arrastável
     this.x = x;
@@ -46,6 +48,7 @@ DraggableBox.prototype.draw = function() { //Renderização do elemento
 
 window.onmousedown = function(e){ //O que acontece ao segurar o mouse
     mouseHeld = true;
+    mouseOldHeld = true;
     if (!selectedBox){
         for (var i = boxArray.length - 1; i > -1; --i){
             if (boxArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){ //Detectando se o mouse colide com algum elemento
@@ -56,6 +59,16 @@ window.onmousedown = function(e){ //O que acontece ao segurar o mouse
             }
         }
     }
+    setTimeout(function(){ //TEMP
+        if(mouseHeld==false){
+            setTimeout(function(){
+                if(mouseOldHeld==true){
+                    console.log('FOI');
+                };
+            }, 600);
+        };
+        console.log(mouseHeld);
+    },100);
 }
 
 window.onmousemove = function(e){ //O que acontece ao mover o mouse
@@ -77,6 +90,9 @@ window.onmousemove = function(e){ //O que acontece ao mover o mouse
 
 window.onmouseup = function(e){ //O que acontece quando solta o mouse
     mouseHeld = false;
+    setTimeout(function(){
+        mouseOldHeld = false;
+    }, 500);
     if (selectedBox){
         selectedBox.isSelected = false;
         selectedBox = null;
