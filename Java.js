@@ -21,7 +21,6 @@ var boxArray = []; //Array onde vão ficar os elementos
 var gridWidth = 400;
 var gridHeight = 400;
 var padding = 10;
-<<<<<<< HEAD
 var gridWidth = 100;
 var gridHeight = 100;
 var scale = 5;
