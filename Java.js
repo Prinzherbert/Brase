@@ -1,17 +1,31 @@
+var body = document.body;
 var imageWidth = document.body.clientWidth; //Tamanho do canvas
 var imageHeight = document.body.clientHeight;
 var canvas = null;
 var ctx = null;
 var bounds = null;
 var selectedBox = null;
+var editBox = null;
 var panX = 0; // "Pan" é o local do canvas infinito sendo mostrado na tela
 var panY = 0;
 var mouseX = 0; // Coordenadas do mouse
 var mouseY = 0;
 var oldMouseX = 0; //Coordenadas anteriores do mouse
 var oldMouseY = 0;
+var displayX = document.getElementById("x");
+var displayY = document.getElementById("y");
 var mouseHeld = false;
+var isCreate = false;
+var isDelete = false;
 var boxArray = []; //Array onde vão ficar os elementos
+var gridWidth = 400;
+var gridHeight = 400;
+var padding = 10;
+var gridWidth = 100;
+var gridHeight = 100;
+var scale = 5;
+var minScale = 1;
+var maxScale = 9;
 
 function DraggableBox(x,y,width,height,text){ //Elemento sendo usado para testes, caixa arrastável
     this.x = x;
@@ -20,6 +34,27 @@ function DraggableBox(x,y,width,height,text){ //Elemento sendo usado para testes
 	this.height = height;
 	this.text = text;
 	this.isSelected = false;
+    this.isEdit = false;
+}
+
+function CreateBox(){
+    isCreate = !isCreate;
+    isDelete = false;
+    if(isCreate){
+        document.body.style.cursor = "copy";
+    } else {
+        document.body.style.cursor = "pointer";
+    }
+}
+
+function DeleteBox(){
+    isDelete = !isDelete;
+    isCreate = false;
+    if(isDelete){
+        document.body.style.cursor = "crosshair";
+    } else {
+        document.body.style.cursor = "pointer";
+    }
 }
 
 DraggableBox.prototype.isCollidingWidthPoint = function(x,y){ //Função para detectar se o mouse está em cima do elemento
@@ -58,9 +93,32 @@ window.onmousedown = function(e){ //O que acontece ao segurar o mouse
     }
 }
 
+window.ondblclick = function(e){
+    if (isCreate == false){
+            if (!editBox){
+                for (var i = boxArray.length - 1; i > -1; --i){
+                    if (boxArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){ //Detectando se o mouse colide com algum elemento
+                        if(isDelete == false){
+                            editBox = boxArray[i];
+                            editBox.isEdit = true;
+                            editBox.text = "Editado";
+                        } else {
+                            boxArray.splice(i,1);
+                        }
+                        return;
+                    }
+                }
+            }
+    } else {
+        boxArray.push(new DraggableBox((mouseX+panX),(mouseY+panY),150,50,"Caixa teste"));
+        requestAnimationFrame(draw);
+    }
+    console.log(editBox);
+}
+
 window.onmousemove = function(e){ //O que acontece ao mover o mouse
-    mouseX = e.clientX - bounds.left;
-    mouseY = e.clientY - bounds.top;
+    mouseX = (e.clientX - bounds.left)*(imageWidth/document.body.clientWidth);
+    mouseY = (e.clientY - bounds.top)*(imageHeight/document.body.clientHeight);
     if (mouseHeld){
         if (!selectedBox){
             panX += oldMouseX - mouseX; //Mudando o local mostrado quando o mouse é arrastado sem colidir com um elemento
@@ -70,9 +128,39 @@ window.onmousemove = function(e){ //O que acontece ao mover o mouse
             selectedBox.y = mouseY - selectedBox.height * 0.5 + panY;
         }
     }
+    displayX.innerText = panX;
+    displayY.innerText = panY;
     oldMouseX = mouseX;
     oldMouseY = mouseY;
     requestAnimationFrame(draw);
+}
+
+function checkScrollDirection(event) {
+    if (checkScrollDirectionIsUp(event)) {
+        if(scale>minScale){
+            scale--;
+            imageWidth = imageWidth - (document.body.clientWidth*0.1);
+            imageHeight = imageHeight - (document.body.clientHeight*0.1);
+        }
+    } else {
+        if(scale<maxScale){
+            scale++;
+            imageWidth = imageWidth + (document.body.clientWidth*0.1);
+            imageHeight = imageHeight + (document.body.clientHeight*0.1);
+        }
+    }
+    canvas.width = imageWidth;
+    canvas.height = imageHeight;
+    ctx.textAlign = "center";
+    ctx.font = "15px Arial";
+    requestAnimationFrame(draw);
+}
+  
+function checkScrollDirectionIsUp(event) {
+    if (event.wheelDelta) {
+      return event.wheelDelta > 0;
+    }
+    return event.deltaY < 0;
 }
 
 window.onmouseup = function(e){ //O que acontece quando solta o mouse
@@ -81,6 +169,10 @@ window.onmouseup = function(e){ //O que acontece quando solta o mouse
         selectedBox.isSelected = false;
         selectedBox = null;
         requestAnimationFrame(draw);
+    }
+    if (editBox){
+        editBox.isEdit = false;
+        editBox = null;
     }
 }
 
@@ -99,13 +191,14 @@ function draw(){ //Renderização do canvas (só renderiza elementos visíveis)
         xMax = box.x + box.width - panX;
         yMin = box.y - panY;
         yMax = box.y + box.width - panY;
-        if (xMax>0 && xMin<imageWidth && yMax>0 && xMin<imageHeight){
+        if (xMax>0 && xMin<imageWidth && yMax>0 && yMin<imageHeight){
             box.draw();
         }
     }
 }
 
 window.onload = function(){ //Inicialização da página
+    body.addEventListener('wheel', checkScrollDirection);
     canvas = document.getElementById("canvas");
     canvas.width = imageWidth;
     canvas.height = imageHeight;
@@ -113,11 +206,10 @@ window.onload = function(){ //Inicialização da página
     ctx = canvas.getContext("2d");
     ctx.textAlign = "center";
     ctx.font = "15px Arial";
-    boxArray.push(new DraggableBox(0,0,150,50,"Caixa teste")); //Elementos utilizados como exemplo
-    boxArray.push(new DraggableBox(Math.random() * 320,Math.random() * 240,100,50,"Texto exemplo"));
-    boxArray.push(new DraggableBox(Math.random() * 320,Math.random() * 240,100,50,"Outra caixa"));
-    boxArray.push(new DraggableBox(Math.random() * 320,Math.random() * 240,100,50,"Caixa"));
-    boxArray.push(new DraggableBox(Math.random() * 320,Math.random() * 240,150,50,"Mais texto"));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,100,50,"Texto exemplo"));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,100,50,"Outra caixa"));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,100,50,"Caixa"));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,50,"Mais texto"));
     requestAnimationFrame(draw);
 }
 
