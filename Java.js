@@ -27,8 +27,6 @@ var gridHeight = 100;
 var scale = 5;
 var minScale = 1;
 var maxScale = 9;
-=======
->>>>>>> eb7463273d9aa7ee2d42aa8f34603f3970e51304
 
 function DraggableBox(x,y,width,height,text){ //Elemento sendo usado para testes, caixa arrastável
     this.x = x;
@@ -39,10 +37,7 @@ function DraggableBox(x,y,width,height,text){ //Elemento sendo usado para testes
 	this.isSelected = false;
     this.isEdit = false;
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> eb7463273d9aa7ee2d42aa8f34603f3970e51304
 function CreateBox(){
     isCreate = !isCreate;
     isDelete = false;
