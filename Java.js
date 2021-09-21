@@ -22,7 +22,7 @@ var scale = 5;                                  // Variável para manter contage
 var minScale = 1;                               // Valores mínimo e máximo de zoom
 var maxScale = 9;
 
-window.onload = function(){                                             // Inicialização da página
+window.onload = function (){                                             // Inicialização da página
     body.addEventListener('wheel', checkScrollDirection);               // Permite detectar scroll
     canvas = document.getElementById("canvas");                         // Setup pro canvas
     canvas.width = imageWidth;
@@ -46,12 +46,14 @@ window.onunload = function(){                                           // Quand
     boxArray = null;
 }
 
-window.onresize = function(){                                           // Atualizando os parâmetros da inicialização caso a janela seja redimensionada (Isso não tá mais funcionando, ARRUMAR)
-    var imageWidth = window.innerWidth;
-    var imageHeight = window.innerHeight;
+window.onresize = function(){                                           // Atualizando os parâmetros da inicialização caso a janela seja redimensionada
+    imageWidth = window.innerWidth;                                     // Armazena o novo tamanho da janela e corrige a escala
+    imageHeight = window.innerHeight;
     canvas.width = imageWidth;
     canvas.height = imageHeight;
     ctx.textAlign = "center";
+    ctx.font = "15px Arial";
+    requestAnimationFrame(draw);
 }
 
 window.onmousedown = function(e){                                       //O que acontece ao segurar o mouse
@@ -147,14 +149,14 @@ function checkScrollDirection(event){                                  // Aplica
     if (checkScrollDirectionIsUp(event)){
         if(scale>minScale){
             scale--;                                                                        // Se a direção do scroll for pra cima e não passar do limite de zoom, aumenta o zoom
-            imageWidth = imageWidth - (document.body.clientWidth*0.1);
-            imageHeight = imageHeight - (document.body.clientHeight*0.1);
+            imageWidth = imageWidth - (window.innerWidth*0.1);
+            imageHeight = imageHeight - (window.innerHeight*0.1);
         }
     } else {
         if(scale<maxScale){
             scale++;                                                                        // Se a direção do scroll for pra baixo e não passar do limite de zoom, diminui o zoom
-            imageWidth = imageWidth + (document.body.clientWidth*0.1);
-            imageHeight = imageHeight + (document.body.clientHeight*0.1);
+            imageWidth = imageWidth + (window.innerWidth*0.1);
+            imageHeight = imageHeight + (window.innerHeight*0.1);
         }
     }
     canvas.width = imageWidth;                                          // Atualiza as dimensões e texto do canvas para se ajustarem ao novo zoom
