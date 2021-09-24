@@ -21,6 +21,7 @@ var isDelete = false;                           // Modo de exclusão de caixas
 var scale = 5;                                  // Variável para manter contagem simples do zoom
 var minScale = 1;                               // Valores mínimo e máximo de zoom
 var maxScale = 9;
+var createEditable = document.createElement('textarea');
 
 window.onload = function (){                                             // Inicialização da página
     body.addEventListener('wheel', checkScrollDirection);               // Permite detectar scroll
@@ -31,6 +32,7 @@ window.onload = function (){                                             // Inic
     ctx = canvas.getContext("2d");
     ctx.textAlign = "center";
     ctx.font = "15px Arial";
+    createEditable.id = "editable";
     boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,"Texto exemplo"));      // Caixas incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
     boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,"Outra caixa"));
     boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,"Caixa"));
@@ -67,6 +69,9 @@ window.onmousedown = function(e){                                       //O que 
                 return;
             }
         }
+        editBox.text = createEditable.value;                            // Coloca na caixa o texto do elemento editável antes dele ser excluído
+        createEditable.remove();                                        // Exclui o elemento editável
+        editBox = null;                                                 // Tira a caixa do modo de edição
     }
 }
 
@@ -77,8 +82,12 @@ window.ondblclick = function(e){                                        // Execu
                     if (boxArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){   // Detectando se o mouse colide com algum elemento
                         if(isDelete == false){
                             editBox = boxArray[i];                                          // Isso muda o texto da caixa
-                            editBox.isEdit = true;
-                            editBox.text = "Editado";
+                            document.body.appendChild(createEditable);                      // Insere o elemento editável na página
+                            createEditable.style.top = String(editBox.y-panY)+"px";         // Coloca o elemento editável no mesmo local da caixa
+                            createEditable.style.left = String(editBox.x-panX)+"px";
+                            createEditable.style.width = String(editBox.width)+"px";
+                            createEditable.style.height = String(editBox.height)+"px";
+                            createEditable.value = editBox.text;                            // Coloca o mesmo texto da caixa no elemento editável
                         } else {
                             boxArray.splice(i,1);                                           // Isso exclui a caixa do array
                         }
@@ -102,8 +111,10 @@ window.onmousemove = function(e){                                               
             displayX.innerText = Math.round(panX);                      // Mostra as coordenadas atuais arredondadas no elemento específico
             displayY.innerText = Math.round(panY);
         } else {
-            selectedBox.x = mouseX - selectedBox.width * 0.5 + panX;    // Movendo o elemento quando o mouse está colidindo com ele
-            selectedBox.y = mouseY - selectedBox.height * 0.5 + panY;
+            if (createEditable != document.activeElement){                  // Só executar caso o modo de edição não esteja ativa
+                selectedBox.x = mouseX - selectedBox.width * 0.5 + panX;    // Movendo o elemento quando o mouse está colidindo com ele
+                selectedBox.y = mouseY - selectedBox.height * 0.5 + panY;
+            }
         }
     }
     oldMouseX = mouseX;                                                 // Guarda a última posição do mouse
@@ -117,10 +128,6 @@ window.onmouseup = function(e){                                         // Execu
         selectedBox.isSelected = false;                                 // Remove a seleção da caixa caso se aplique
         selectedBox = null;
         requestAnimationFrame(draw);
-    }
-    if (editBox){
-        editBox.isEdit = false;                                         // Remove o modo de edição da caixa caso se aplique
-        editBox = null;
     }
 }
 
@@ -201,7 +208,6 @@ class DraggableBox {                                                    // Class
         this.height = height;
         this.text = text;                                               // Conteúdo da caixa
         this.isSelected = false;                                        // Seleção e edit da caixa
-        this.isEdit = false;
     }
     isCollidingWidthPoint(x, y) {
         return (x > this.x && x < this.x + this.width) && (y > this.y && y < this.y + this.height);         // Retorna true caso as coordenadas recebidas coincidam com as coordenadas ocupadas por uma caixa
