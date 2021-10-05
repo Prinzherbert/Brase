@@ -19,6 +19,7 @@ var mouseHeld = false;                          // Detecta se o mouse continua a
 var isCreate = false;                           // Modo de criação de caixas
 var isDelete = false;                           // Modo de exclusão de caixas
 var scale = 5;                                  // Variável para manter contagem simples do zoom
+var zoom = 1;
 var minScale = 1;                               // Valores mínimo e máximo de zoom
 var maxScale = 9;
 var createEditable = document.createElement('textarea');
@@ -69,9 +70,11 @@ window.onmousedown = function(e){                                       //O que 
                 return;
             }
         }
-        editBox.text = createEditable.value;                            // Coloca na caixa o texto do elemento editável antes dele ser excluído
-        createEditable.remove();                                        // Exclui o elemento editável
-        editBox = null;                                                 // Tira a caixa do modo de edição
+        if (editBox!=null){
+            editBox.text = createEditable.value;                            // Coloca na caixa o texto do elemento editável antes dele ser excluído
+            createEditable.remove();                                        // Exclui o elemento editável
+            editBox = null;                                                 // Tira a caixa do modo de edição
+        }
     }
 }
 
@@ -83,11 +86,12 @@ window.ondblclick = function(e){                                        // Execu
                         if(isDelete == false){
                             editBox = boxArray[i];                                          // Isso muda o texto da caixa
                             document.body.appendChild(createEditable);                      // Insere o elemento editável na página
-                            createEditable.style.top = String(editBox.y-panY)+"px";         // Coloca o elemento editável no mesmo local da caixa
-                            createEditable.style.left = String(editBox.x-panX)+"px";
-                            createEditable.style.width = String(editBox.width)+"px";
-                            createEditable.style.height = String(editBox.height)+"px";
+                            createEditable.style.top = String((editBox.y-panY)*zoom)+"px";         // Coloca o elemento editável no mesmo local da caixa
+                            createEditable.style.left = String((editBox.x-panX)*zoom)+"px";
+                            createEditable.style.width = String(editBox.width*zoom)+"px";
+                            createEditable.style.height = String(editBox.height*zoom)+"px";
                             createEditable.value = editBox.text;                            // Coloca o mesmo texto da caixa no elemento editável
+                            console.log(zoom);
                         } else {
                             boxArray.splice(i,1);                                           // Isso exclui a caixa do array
                         }
@@ -131,6 +135,16 @@ window.onmouseup = function(e){                                         // Execu
     }
 }
 
+window.onkeydown = function(e){
+    if (e.key == "Enter") {
+        if (editBox!=null){
+            editBox.text = createEditable.value;                            // Coloca na caixa o texto do elemento editável antes dele ser excluído
+            createEditable.remove();                                        // Exclui o elemento editável
+            editBox = null;                                                 // Tira a caixa do modo de edição
+        }
+    }
+}
+
 function draw(){                                                        // Renderização do canvas (só renderiza elementos visíveis)
     ctx.fillStyle = "#ebebeb";                                          // Cor do background do canvas
     ctx.fillRect(0,0,imageWidth,imageHeight);
@@ -158,14 +172,18 @@ function checkScrollDirection(event){                                  // Aplica
             scale--;                                                                        // Se a direção do scroll for pra cima e não passar do limite de zoom, aumenta o zoom
             imageWidth = imageWidth - (window.innerWidth*0.1);
             imageHeight = imageHeight - (window.innerHeight*0.1);
+            zoom = window.innerWidth/imageWidth;
         }
     } else {
         if(scale<maxScale){
             scale++;                                                                        // Se a direção do scroll for pra baixo e não passar do limite de zoom, diminui o zoom
             imageWidth = imageWidth + (window.innerWidth*0.1);
             imageHeight = imageHeight + (window.innerHeight*0.1);
+            zoom = window.innerWidth/imageWidth;
         }
     }
+    createEditable.remove();                                            // Exclui o elemento editável
+    editBox = null;                                                     // Tira a caixa do modo de edição
     canvas.width = imageWidth;                                          // Atualiza as dimensões e texto do canvas para se ajustarem ao novo zoom
     canvas.height = imageHeight;
     ctx.textAlign = "center";
