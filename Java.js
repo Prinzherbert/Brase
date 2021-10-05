@@ -23,6 +23,12 @@ var zoom = 1;
 var minScale = 1;                               // Valores mínimo e máximo de zoom
 var maxScale = 9;
 var createEditable = document.createElement('textarea');
+var lineLength = 15;                                        // Tamanho das linhas com separação de palavra
+var maxLineLength = 30;                         // Tamanho das linhas independentemenete da separação
+var lineStep = 25;                              // Espaçamento entre as linhas
+var breakChar = "¢";                            // Caractere usado na quebra
+var breakCount = 0;                             // Contagem de caracteres para quebrar
+var tempText;                                   // Texto antes de ser quebrado
 
 window.onload = function (){                                             // Inicialização da página
     body.addEventListener('wheel', checkScrollDirection);               // Permite detectar scroll
@@ -34,10 +40,10 @@ window.onload = function (){                                             // Inic
     ctx.textAlign = "center";
     ctx.font = "15px Arial";
     createEditable.id = "editable";
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,"Texto exemplo"));      // Caixas incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,"Outra caixa"));
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,"Caixa"));
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,"Mais texto"));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Texto exemplo"]));      // Caixas incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Outra caixa"]));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Caixa"]));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Mais texto"]));
     requestAnimationFrame(draw);
 }
 
@@ -71,9 +77,7 @@ window.onmousedown = function(e){                                       //O que 
             }
         }
         if (editBox!=null){
-            editBox.text = createEditable.value;                            // Coloca na caixa o texto do elemento editável antes dele ser excluído
-            createEditable.remove();                                        // Exclui o elemento editável
-            editBox = null;                                                 // Tira a caixa do modo de edição
+            textEdit();
         }
     }
 }
@@ -90,8 +94,7 @@ window.ondblclick = function(e){                                        // Execu
                             createEditable.style.left = String((editBox.x-panX)*zoom)+"px";
                             createEditable.style.width = String(editBox.width*zoom)+"px";
                             createEditable.style.height = String(editBox.height*zoom)+"px";
-                            createEditable.value = editBox.text;                            // Coloca o mesmo texto da caixa no elemento editável
-                            console.log(zoom);
+                            createEditable.value = editBox.text[0];                            // Coloca o mesmo texto da caixa no elemento editável
                         } else {
                             boxArray.splice(i,1);                                           // Isso exclui a caixa do array
                         }
@@ -100,7 +103,7 @@ window.ondblclick = function(e){                                        // Execu
                 }
             }
     } else {
-        boxArray.push(new DraggableBox((mouseX+panX),(mouseY+panY),150,150,"Caixa teste"));  // Isso cria uma nova caixa
+        boxArray.push(new DraggableBox((mouseX+panX),(mouseY+panY),150,150,["Caixa teste"]));  // Isso cria uma nova caixa
         requestAnimationFrame(draw);
     }
 }
@@ -138,11 +141,38 @@ window.onmouseup = function(e){                                         // Execu
 window.onkeydown = function(e){
     if (e.key == "Enter") {
         if (editBox!=null){
-            editBox.text = createEditable.value;                            // Coloca na caixa o texto do elemento editável antes dele ser excluído
-            createEditable.remove();                                        // Exclui o elemento editável
-            editBox = null;                                                 // Tira a caixa do modo de edição
+            textEdit();
         }
     }
+}
+
+function replaceAt(string, index, replacement) {
+    return string.substr(0, index) + replacement + string.substr(index + replacement.length);
+}
+
+function textEdit(){
+    tempText = createEditable.value;                                // Pega o texto do elemento editável em uma variável
+    for(var i=0; i<tempText.length; i++){                           // Loop para quebrar as linhas do texto
+        let breakIncoming = false;
+        let currentChar = tempText.charAt(i);
+        breakCount++;
+        if (breakCount >= lineLength){
+            breakIncoming = true;
+        }
+        if (breakIncoming && currentChar == " "){                   // Só quebra em separação de palavras
+            tempText = replaceAt(tempText, i, breakChar);
+            breakIncoming = false;
+            breakCount = 0;
+        }
+        if (breakCount >= maxLineLength){                           // Depois de certo número de caracteres, quebra independente da separação de palavras
+            tempText = replaceAt(tempText, i, breakChar);
+            breakIncoming = false;
+            breakCount = 0;
+        }
+    }
+    editBox.text = tempText.split(breakChar);
+    createEditable.remove();                                        // Exclui o elemento editável
+    editBox = null;                                                 // Tira a caixa do modo de edição
 }
 
 function draw(){                                                        // Renderização do canvas (só renderiza elementos visíveis)
@@ -243,7 +273,9 @@ class DraggableBox {                                                    // Class
             ctx.fillRect(this.x - panX, this.y - panY, this.width, this.height);                                            // Preenche a caixa com a cor padrão
         }
         ctx.fillStyle = "#003a6e";                                                                                          // Cor do texto
-        ctx.fillText(this.text, this.x + this.width * 0.5 - panX, this.y + this.height * 0.5 - panY, this.width);           // Preenche a caixa com texto
+        for (var i=0; i<this.text.length; i++){
+            ctx.fillText(this.text[i], this.x + this.width * 0.5 - panX, (this.y + this.height * 0.5 - panY) + (i*lineStep) - ((this.text.length*lineStep/2)-(1*lineStep/2)), this.width);           // Preenche a caixa com texto (multilinha)
+        }
         ctx.fillStyle = "#c2c2c2";                                                                                          // Cor padrão da caixa
     }
 }
