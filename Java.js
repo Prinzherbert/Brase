@@ -1,6 +1,7 @@
 var body = document.body;
 var imageWidth = window.innerWidth;     //Tamanho do canvas
 var imageHeight = window.innerHeight;
+const postit = document.getElementById('postit');
 var canvas = null;                              // Variáveis nulas para inicialização e operação do canvas;
 var ctx = null;
 var bounds = null;
@@ -29,6 +30,7 @@ var lineStep = 25;                              // Espaçamento entre as linhas
 var breakChar = "¢";                            // Caractere usado na quebra
 var breakCount = 0;                             // Contagem de caracteres para quebrar
 var tempText;                                   // Texto antes de ser quebrado
+var highlightScaling = 2;
 
 window.onload = function (){                                             // Inicialização da página
     body.addEventListener('wheel', checkScrollDirection);               // Permite detectar scroll
@@ -94,7 +96,7 @@ window.ondblclick = function(e){                                        // Execu
                             createEditable.style.left = String((editBox.x-panX)*zoom)+"px";
                             createEditable.style.width = String(editBox.width*zoom)+"px";
                             createEditable.style.height = String(editBox.height*zoom)+"px";
-                            createEditable.value = editBox.text[0];                            // Coloca o mesmo texto da caixa no elemento editável
+                            createEditable.value = editBox.text.join(' ');                            // Coloca o mesmo texto da caixa no elemento editável
                         } else {
                             boxArray.splice(i,1);                                           // Isso exclui a caixa do array
                         }
@@ -255,6 +257,7 @@ class DraggableBox {                                                    // Class
         this.width = width;                                             // Tamanho da caixa
         this.height = height;
         this.text = text;                                               // Conteúdo da caixa
+        this.hue = Math.random() * 360;
         this.isSelected = false;                                        // Seleção e edit da caixa
     }
     isCollidingWidthPoint(x, y) {
@@ -265,14 +268,16 @@ class DraggableBox {                                                    // Class
         this.y = newY - this.height * 0.5;
     }
     draw() {
-        if (this.isSelected) {
-            ctx.fillStyle = "#828282";                                                                                      // Cor ao selecionar a caixa
-            ctx.fillRect(this.x - panX, this.y - panY, this.width, this.height);                                            // Preenche a caixa com a cor de seleção
-            ctx.fillStyle = "#c2c2c2";                                                                                      // Cor padrão do elemento devolvida
+        ctx.filter = "hue-rotate(" + this.hue.toString() + "deg)";
+        if (this.isSelected && editBox == null) {     
+            ctx.drawImage(postit, this.x - panX - (5*highlightScaling), this.y - panY - (5*highlightScaling), this.width + (5*highlightScaling*2), this.height + (5*highlightScaling*2));       // Preenche a caixa com a cor de seleção
+            ctx.font = "17px Arial";
         } else {
-            ctx.fillRect(this.x - panX, this.y - panY, this.width, this.height);                                            // Preenche a caixa com a cor padrão
+            ctx.drawImage(postit, this.x - panX, this.y - panY, this.width, this.height);                                            // Preenche a caixa com a cor padrão
+            ctx.font = "15px Arial";
         }
-        ctx.fillStyle = "#003a6e";                                                                                          // Cor do texto
+        ctx.filter = "none";
+        ctx.fillStyle = "#000000";                                                                                          // Cor do texto
         for (var i=0; i<this.text.length; i++){
             ctx.fillText(this.text[i], this.x + this.width * 0.5 - panX, (this.y + this.height * 0.5 - panY) + (i*lineStep) - ((this.text.length*lineStep/2)-(1*lineStep/2)), this.width);           // Preenche a caixa com texto (multilinha)
         }
