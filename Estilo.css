@@ -11,20 +11,16 @@ canvas{
 }
 .button{
     position: absolute;
-    background-color: white;
+    background-color: transparent;
     z-index: 10;
-    width: 5vh;
-    height: 5vh;
-    border: 1px solid black;
-    border-radius: 10px;
-    text-align: center;
+    width: 10vh;
+    height: 10vh;
+    outline: none;
+    border: none;
+    background-size: 100%;
 }
 .button:hover{
-    background-color: lightgray;
-    cursor:pointer;
-}
-.button:active{
-    background-color: gray;
+    cursor: pointer;
 }
 .pan{
     font: arial 12px;
@@ -32,25 +28,41 @@ canvas{
     z-index: 10;
     text-align: center;
     width: 10vh;
-    background-color: lightgray;
+    background-color: #ececec;
     border: 1px solid black;
-    border-radius: 10px;
+    border-radius: 3px;
 }
 #x{
-    top: 10px;
+    top: 5px;
     left: 10px;
 }
 #y{
-    top: 10px;
+    top: 5px;
     left: calc(20px + 10vh);
 }
 #create{
     left: 10px;
     bottom: 10px;
+    background-image: url(Novo\ Post-it.png);
+    filter: hue-rotate(40deg);
 }
 #delete{
-    left: calc(20px + 5vh);
+    left: calc(20px + 10vh);
     bottom: 10px;
+    background-image: url(Excluir\ Post-it.png);
+    filter: hue-rotate(290deg);
+}
+#create:hover{
+    filter: hue-rotate(40deg) brightness(1.7);
+}
+#delete:hover{
+    filter: hue-rotate(290deg) brightness(1.1);
+}
+#create:active{
+    filter: hue-rotate(40deg) brightness(0.6);
+}
+#delete:active{
+    filter: hue-rotate(290deg) brightness(0.6);
 }
 #editable{
     z-index: 1;
