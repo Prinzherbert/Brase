@@ -28,9 +28,17 @@ canvas{
     z-index: 10;
     text-align: center;
     width: 10vh;
-    background-color: #ececec;
-    border: 1px solid black;
     border-radius: 3px;
+}
+.lightPan{
+    background-color: #ececec;
+    color: black;
+    border: 1px solid black;
+}
+.darkPan{
+    background-color: #181818;
+    color: white;
+    border: 1px solid #282828;
 }
 #x{
     top: 5px;
@@ -52,18 +60,25 @@ canvas{
     background-image: url(Excluir\ Post-it.png);
     filter: hue-rotate(290deg);
 }
-#create:hover{
-    filter: hue-rotate(40deg) brightness(1.7);
+#theme{
+    right: 10px;
+    bottom: 10px;
+    background-image: url(Dark\ Post-it.png);
+    filter: hue-rotate(240deg) brightness(0.8);
 }
-#delete:hover{
-    filter: hue-rotate(290deg) brightness(1.1);
-}
-#create:active{
-    filter: hue-rotate(40deg) brightness(0.6);
-}
-#delete:active{
-    filter: hue-rotate(290deg) brightness(0.6);
-}
+
+#create:hover{filter: hue-rotate(40deg) brightness(1.7);}
+
+#delete:hover{filter: hue-rotate(290deg) brightness(1.1);}
+
+#theme:hover{filter: hue-rotate(240deg) brightness(0.9);}
+
+#create:active{filter: hue-rotate(40deg) brightness(0.6);}
+
+#delete:active{filter: hue-rotate(290deg) brightness(0.6);}
+
+#theme:active{filter: hue-rotate(240deg) brightness(0.6);}
+
 #editable{
     z-index: 1;
     position: absolute;

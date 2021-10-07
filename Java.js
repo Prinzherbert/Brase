@@ -35,6 +35,14 @@ var tempText;                                   // Texto antes de ser quebrado
 var highlightScaling = 2;
 var gridLimit = 64;
 var gridSize = 256;
+var isDarkTheme = false;
+var isThemeSwitchPossible = true;
+var darkThemeSwitch = document.getElementById('theme');
+
+// Paleta de cores
+var textColor = "#000000";
+var gridColor = "#ececec";
+var backgroundColor = "#f2f2f2";
 
 window.onload = function (){                                             // Inicialização da página
     body.addEventListener('wheel', checkScrollDirection);               // Permite detectar scroll
@@ -188,7 +196,7 @@ function textEdit(){
 }
 
 function draw(){                                                        // Renderização do canvas (só renderiza elementos visíveis)
-    ctx.fillStyle = "#f2f2f2";                                          // Cor do background do canvas
+    ctx.fillStyle = backgroundColor;                                    // Cor do background do canvas
     ctx.fillRect(0,0,imageWidth,imageHeight);
     drawGrid();
     var box = null;
@@ -219,7 +227,7 @@ function drawGrid(){                                                    // Desen
     } 
     ctx.setTransform(1, 0, 0, 1, -panX, -panY)
     ctx.lineWidth = 2;
-    ctx.strokeStyle = "#ececec";
+    ctx.strokeStyle = gridColor;
     ctx.beginPath();
     for (i = 0; i < size; i += gridScale) {
         ctx.moveTo(x + i, y);
@@ -291,11 +299,40 @@ function DeleteBoxMode(){                                                   // F
     }
 }
 
+function ChangeTheme(){                                                 // Muda as cores do site
+    console.log(isThemeSwitchPossible);
+    if (isThemeSwitchPossible){
+        if (!isDarkTheme){
+            textColor = "#000000";
+            gridColor = "#181818";
+            backgroundColor = "#141414";
+            displayX.classList.remove('lightPan');
+            displayY.classList.remove('lightPan');
+            displayX.classList.add('darkPan');
+            displayY.classList.add('darkPan');
+            darkThemeSwitch.style.backgroundImage = "url('Light\ Post-it.png')";
+        } else {
+            textColor = "#000000";
+            gridColor = "#ececec";
+            backgroundColor = "#f2f2f2";
+            displayX.classList.remove('darkPan');
+            displayY.classList.remove('darkPan');
+            displayX.classList.add('lightPan');
+            displayY.classList.add('lightPan');
+            darkThemeSwitch.style.backgroundImage = "url('Dark\ Post-it.png')";
+        }
+        isThemeSwitchPossible = false;
+        setTimeout(function(){isThemeSwitchPossible = !isThemeSwitchPossible}, 1000);         // Tempo de espera para a troca de tema (Impossibilita problemas com epilepsia)
+    }
+    isDarkTheme = !isDarkTheme;
+    requestAnimationFrame(draw);
+}
+
 class DraggableBox {                                                    // Classe para as caixas arrastáveis (O VSCode transformou em uma classe automaticamente, lembrar de pesquisar sobre em etapas futuras)
     constructor(x, y, size, text) {
         this.x = x;                                                     // Coordenadas da caixa
         this.y = y;
-        this.size = size;                                             // Tamanho da caixa
+        this.size = size;                                               // Tamanho da caixa
         this.text = text;                                               // Conteúdo da caixa
         this.hue = Math.random() * 360;                                 // Variação de cor nos post-its
         this.isSelected = false;                                        // Seleção e edit da caixa
@@ -317,10 +354,9 @@ class DraggableBox {                                                    // Class
             ctx.font = "bold 15px Arial";
         }
         ctx.filter = "none";                                            // Tirando filtro de cor
-        ctx.fillStyle = "#000000";                                                                                          // Cor do texto
+        ctx.fillStyle = textColor;                                                                                          // Cor do texto
         for (var i=0; i<this.text.length; i++){
             ctx.fillText(this.text[i], this.x + this.size * 0.5 - panX, (this.y + this.size * 0.5 - panY) + (i*lineStep) - ((this.text.length*lineStep/2)-(1*lineStep/2)), this.size);           // Preenche a caixa com texto (multilinha)
         }
-        ctx.fillStyle = "#c2c2c2";                                                                                          // Cor padrão da caixa
     }
 }
