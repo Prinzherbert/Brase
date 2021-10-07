@@ -21,8 +21,8 @@ var isCreate = false;                           // Modo de criação de caixas
 var isDelete = false;                           // Modo de exclusão de caixas
 var scale = 5;                                  // Variável para manter contagem simples do zoom
 var zoom = 1;
-var minScale = 1;                               // Valores mínimo e máximo de zoom
-var maxScale = 9;
+var minScale = 2;                               // Valores mínimo e máximo de zoom
+var maxScale = 15;
 var createEditable = document.createElement('textarea');
 var lineLength = 18;                                        // Tamanho das linhas com separação de palavra
 var maxLineLength = 22;                         // Tamanho das linhas independentemenete da separação
@@ -33,6 +33,8 @@ var breakChar = "¢";                            // Caractere usado na quebra
 var breakCount = 0;                             // Contagem de caracteres para quebrar
 var tempText;                                   // Texto antes de ser quebrado
 var highlightScaling = 2;
+var gridLimit = 64;
+var gridSize = 256;
 
 window.onload = function (){                                             // Inicialização da página
     body.addEventListener('wheel', checkScrollDirection);               // Permite detectar scroll
@@ -184,8 +186,9 @@ function textEdit(){
 }
 
 function draw(){                                                        // Renderização do canvas (só renderiza elementos visíveis)
-    ctx.fillStyle = "#ebebeb";                                          // Cor do background do canvas
+    ctx.fillStyle = "#f2f2f2";                                          // Cor do background do canvas
     ctx.fillRect(0,0,imageWidth,imageHeight);
+    drawGrid();
     var box = null;
     var xMin = 0;
     var xMax = 0;
@@ -203,22 +206,53 @@ function draw(){                                                        // Rende
     }
 }
 
+function drawGrid(){                                                    // Desenha a grade do background
+    var gridScale, size, x, y = false;
+    gridScale = gridSize;
+    size = Math.max(canvas.width, canvas.height) / 1 + gridScale * 2;
+    x = Math.floor(panX / gridScale) * gridScale;
+    y = Math.floor(panY / gridScale) * gridScale;
+    if (size / gridScale > gridLimit) {
+        size = gridScale * gridLimit;      
+    } 
+    ctx.setTransform(1, 0, 0, 1, -panX, -panY)
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#ececec";
+    ctx.beginPath();
+    for (i = 0; i < size; i += gridScale) {
+        ctx.moveTo(x + i, y);
+        ctx.lineTo(x + i, y + size);
+        ctx.moveTo(x, y + i);
+        ctx.lineTo(x + size, y + i);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.stroke();
+}  
+
 function checkScrollDirection(event){                                  // Aplica o zoom dependendo da direção do scroll
     if (checkScrollDirectionIsUp(event)){
         if(scale>minScale){
             scale--;                                                                        // Se a direção do scroll for pra cima e não passar do limite de zoom, aumenta o zoom
-            imageWidth = imageWidth - (window.innerWidth*0.1);
-            imageHeight = imageHeight - (window.innerHeight*0.1);
+            imageWidth -= window.innerWidth*0.1;
+            imageHeight -= window.innerHeight*0.1;
             zoom = window.innerWidth/imageWidth;
+            panX += mouseX * 0.1 * zoom * 0.9;                                              // Ajuste do pan para acompanhar a posição do mouse no zoom
+            panY += mouseY * 0.1 * zoom * 0.9;                                              // Ajuste do pan para acompanhar a posição do mouse no zoom
         }
     } else {
         if(scale<maxScale){
             scale++;                                                                        // Se a direção do scroll for pra baixo e não passar do limite de zoom, diminui o zoom
-            imageWidth = imageWidth + (window.innerWidth*0.1);
-            imageHeight = imageHeight + (window.innerHeight*0.1);
+            imageWidth += window.innerWidth*0.1;
+            imageHeight += window.innerHeight*0.1;
             zoom = window.innerWidth/imageWidth;
+            panX -= mouseX * 0.1 * zoom * 0.9;                                              // Ajuste do pan para acompanhar a posição do mouse no zoom
+            panY -= mouseY * 0.1 * zoom * 0.9;                                              // Ajuste do pan para acompanhar a posição do mouse no zoom
         }
     }
+    mouseX = (event.clientX - bounds.left)*(imageWidth/window.innerWidth);                  // Calculando a posição do mouse novamente, pois muda com o zoom
+    mouseY = (event.clientY - bounds.top)*(imageHeight/window.innerHeight);
+    displayX.innerText = Math.round(panX);                                                  // Mostra as coordenadas atuais arredondadas no elemento específico
+    displayY.innerText = Math.round(panY);
     createEditable.remove();                                            // Exclui o elemento editável
     editBox = null;                                                     // Tira a caixa do modo de edição
     canvas.width = imageWidth;                                          // Atualiza as dimensões e texto do canvas para se ajustarem ao novo zoom
