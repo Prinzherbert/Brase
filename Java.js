@@ -24,8 +24,10 @@ var zoom = 1;
 var minScale = 1;                               // Valores mínimo e máximo de zoom
 var maxScale = 9;
 var createEditable = document.createElement('textarea');
-var lineLength = 15;                                        // Tamanho das linhas com separação de palavra
-var maxLineLength = 30;                         // Tamanho das linhas independentemenete da separação
+var lineLength = 18;                                        // Tamanho das linhas com separação de palavra
+var maxLineLength = 22;                         // Tamanho das linhas independentemenete da separação
+var maxLength = 130;
+var postitSize = 200;
 var lineStep = 25;                              // Espaçamento entre as linhas
 var breakChar = "¢";                            // Caractere usado na quebra
 var breakCount = 0;                             // Contagem de caracteres para quebrar
@@ -42,10 +44,10 @@ window.onload = function (){                                             // Inic
     ctx.textAlign = "center";
     ctx.font = "15px Arial";
     createEditable.id = "editable";
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Texto exemplo"]));      // Caixas incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Outra caixa"]));
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Caixa"]));
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,150,150,["Mais texto"]));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Texto exemplo"]));      // Caixas incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Outra caixa"]));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Caixa"]));
+    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Mais texto"]));
     requestAnimationFrame(draw);
 }
 
@@ -92,10 +94,11 @@ window.ondblclick = function(e){                                        // Execu
                         if(isDelete == false){
                             editBox = boxArray[i];                                          // Isso muda o texto da caixa
                             document.body.appendChild(createEditable);                      // Insere o elemento editável na página
+                            createEditable.style.filter = "hue-rotate(" + editBox.hue.toString() + "deg)";
                             createEditable.style.top = String((editBox.y-panY)*zoom)+"px";         // Coloca o elemento editável no mesmo local da caixa
                             createEditable.style.left = String((editBox.x-panX)*zoom)+"px";
-                            createEditable.style.width = String(editBox.width*zoom)+"px";
-                            createEditable.style.height = String(editBox.height*zoom)+"px";
+                            createEditable.style.width = String(editBox.size*zoom)+"px";
+                            createEditable.style.height = String(editBox.size*zoom)+"px";
                             createEditable.value = editBox.text.join(' ');                            // Coloca o mesmo texto da caixa no elemento editável
                         } else {
                             boxArray.splice(i,1);                                           // Isso exclui a caixa do array
@@ -105,7 +108,7 @@ window.ondblclick = function(e){                                        // Execu
                 }
             }
     } else {
-        boxArray.push(new DraggableBox((mouseX+panX),(mouseY+panY),150,150,["Caixa teste"]));  // Isso cria uma nova caixa
+        boxArray.push(new DraggableBox((mouseX+panX),(mouseY+panY),postitSize,["Caixa teste"]));  // Isso cria uma nova caixa
         requestAnimationFrame(draw);
     }
 }
@@ -121,8 +124,8 @@ window.onmousemove = function(e){                                               
             displayY.innerText = Math.round(panY);
         } else {
             if (createEditable != document.activeElement){                  // Só executar caso o modo de edição não esteja ativa
-                selectedBox.x = mouseX - selectedBox.width * 0.5 + panX;    // Movendo o elemento quando o mouse está colidindo com ele
-                selectedBox.y = mouseY - selectedBox.height * 0.5 + panY;
+                selectedBox.x = mouseX - selectedBox.size * 0.5 + panX;    // Movendo o elemento quando o mouse está colidindo com ele
+                selectedBox.y = mouseY - selectedBox.size * 0.5 + panY;
             }
         }
     }
@@ -154,6 +157,7 @@ function replaceAt(string, index, replacement) {
 
 function textEdit(){
     tempText = createEditable.value;                                // Pega o texto do elemento editável em uma variável
+    tempText = tempText.substring(0, maxLength);
     for(var i=0; i<tempText.length; i++){                           // Loop para quebrar as linhas do texto
         let breakIncoming = false;
         let currentChar = tempText.charAt(i);
@@ -172,6 +176,8 @@ function textEdit(){
             breakCount = 0;
         }
     }
+    breakIncoming = false;
+    breakCount = 0;
     editBox.text = tempText.split(breakChar);
     createEditable.remove();                                        // Exclui o elemento editável
     editBox = null;                                                 // Tira a caixa do modo de edição
@@ -185,13 +191,12 @@ function draw(){                                                        // Rende
     var xMax = 0;
     var yMin = 0;
     var yMax = 0;
-    ctx.fillStyle = "#c2c2c2";                                          // Cor padrão da caixa
     for (var i=0; i<boxArray.length; ++i){
         box = boxArray[i];
         xMin = box.x - panX - 2000;
-        xMax = box.x + box.width - panX;
+        xMax = box.x + box.size - panX;
         yMin = box.y - panY;
-        yMax = box.y + box.width - panY;
+        yMax = box.y + box.size - panY;
         if (xMax>0 && xMin<imageWidth && yMax>0 && yMin<imageHeight){   // Detecta e renderiza apenas as caixas que aparecem na tela
             box.draw();
         }
@@ -251,35 +256,34 @@ function DeleteBoxMode(){                                                   // F
 }
 
 class DraggableBox {                                                    // Classe para as caixas arrastáveis (O VSCode transformou em uma classe automaticamente, lembrar de pesquisar sobre em etapas futuras)
-    constructor(x, y, width, height, text) {
+    constructor(x, y, size, text) {
         this.x = x;                                                     // Coordenadas da caixa
         this.y = y;
-        this.width = width;                                             // Tamanho da caixa
-        this.height = height;
+        this.size = size;                                             // Tamanho da caixa
         this.text = text;                                               // Conteúdo da caixa
-        this.hue = Math.random() * 360;
+        this.hue = Math.random() * 360;                                 // Variação de cor nos post-its
         this.isSelected = false;                                        // Seleção e edit da caixa
     }
     isCollidingWidthPoint(x, y) {
-        return (x > this.x && x < this.x + this.width) && (y > this.y && y < this.y + this.height);         // Retorna true caso as coordenadas recebidas coincidam com as coordenadas ocupadas por uma caixa
+        return (x > this.x && x < this.x + this.size) && (y > this.y && y < this.y + this.size);         // Retorna true caso as coordenadas recebidas coincidam com as coordenadas ocupadas por uma caixa
     }
     drag(newX, newY) {
-        this.x = newX - this.width * 0.5;
-        this.y = newY - this.height * 0.5;
+        this.x = newX - this.size * 0.5;
+        this.y = newY - this.size * 0.5;
     }
     draw() {
-        ctx.filter = "hue-rotate(" + this.hue.toString() + "deg)";
+        ctx.filter = "hue-rotate(" + this.hue.toString() + "deg)";      // Adicionando filtro de cor
         if (this.isSelected && editBox == null) {     
-            ctx.drawImage(postit, this.x - panX - (5*highlightScaling), this.y - panY - (5*highlightScaling), this.width + (5*highlightScaling*2), this.height + (5*highlightScaling*2));       // Preenche a caixa com a cor de seleção
+            ctx.drawImage(postit, this.x - panX - (5*highlightScaling), this.y - panY - (5*highlightScaling), this.size + (5*highlightScaling*2), this.size + (5*highlightScaling*2));       // Preenche a caixa com a cor de seleção
             ctx.font = "17px Arial";
         } else {
-            ctx.drawImage(postit, this.x - panX, this.y - panY, this.width, this.height);                                            // Preenche a caixa com a cor padrão
+            ctx.drawImage(postit, this.x - panX, this.y - panY, this.size, this.size);                                            // Preenche a caixa com a cor padrão
             ctx.font = "15px Arial";
         }
-        ctx.filter = "none";
+        ctx.filter = "none";                                            // Tirando filtro de cor
         ctx.fillStyle = "#000000";                                                                                          // Cor do texto
         for (var i=0; i<this.text.length; i++){
-            ctx.fillText(this.text[i], this.x + this.width * 0.5 - panX, (this.y + this.height * 0.5 - panY) + (i*lineStep) - ((this.text.length*lineStep/2)-(1*lineStep/2)), this.width);           // Preenche a caixa com texto (multilinha)
+            ctx.fillText(this.text[i], this.x + this.size * 0.5 - panX, (this.y + this.size * 0.5 - panY) + (i*lineStep) - ((this.text.length*lineStep/2)-(1*lineStep/2)), this.size);           // Preenche a caixa com texto (multilinha)
         }
         ctx.fillStyle = "#c2c2c2";                                                                                          // Cor padrão da caixa
     }

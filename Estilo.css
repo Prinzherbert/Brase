@@ -56,4 +56,14 @@ canvas{
     z-index: 1;
     position: absolute;
     resize: none;
+    font: 15px Arial;
+    font-weight: bold;
+    overflow: hidden;
+    outline: none;
+    border: none;
+    background-color: transparent;
+    background-image: url(Post-it.png);
+    background-size: 100%;
+    padding: 1em;
+    text-align: center;
 }
