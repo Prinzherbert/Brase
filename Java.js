@@ -97,6 +97,8 @@ window.ondblclick = function(e){                                        // Execu
                             editBox = boxArray[i];                                          // Isso muda o texto da caixa
                             document.body.appendChild(createEditable);                      // Insere o elemento editável na página
                             createEditable.style.filter = "hue-rotate(" + editBox.hue.toString() + "deg)";
+                            createEditable.style.font = (zoom*15).toString() + "px Arial";
+                            createEditable.style.fontWeight = "bold";
                             createEditable.style.top = String((editBox.y-panY)*zoom)+"px";         // Coloca o elemento editável no mesmo local da caixa
                             createEditable.style.left = String((editBox.x-panX)*zoom)+"px";
                             createEditable.style.width = String(editBox.size*zoom)+"px";
@@ -309,10 +311,10 @@ class DraggableBox {                                                    // Class
         ctx.filter = "hue-rotate(" + this.hue.toString() + "deg)";      // Adicionando filtro de cor
         if (this.isSelected && editBox == null) {     
             ctx.drawImage(postit, this.x - panX - (5*highlightScaling), this.y - panY - (5*highlightScaling), this.size + (5*highlightScaling*2), this.size + (5*highlightScaling*2));       // Preenche a caixa com a cor de seleção
-            ctx.font = "17px Arial";
+            ctx.font = "bold 17px Arial";
         } else {
             ctx.drawImage(postit, this.x - panX, this.y - panY, this.size, this.size);                                            // Preenche a caixa com a cor padrão
-            ctx.font = "15px Arial";
+            ctx.font = "bold 15px Arial";
         }
         ctx.filter = "none";                                            // Tirando filtro de cor
         ctx.fillStyle = "#000000";                                                                                          // Cor do texto

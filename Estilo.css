@@ -56,8 +56,6 @@ canvas{
     z-index: 1;
     position: absolute;
     resize: none;
-    font: 15px Arial;
-    font-weight: bold;
     overflow: hidden;
     outline: none;
     border: none;
