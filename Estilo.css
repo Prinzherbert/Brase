@@ -92,3 +92,13 @@ canvas{
     padding: 1em;
     text-align: center;
 }
+#logo{
+    z-index: 10;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 10vh;
+    height: 8vh;
+    background-image: url(Logo\ Brase.png);
+    background-size: 100%;
+}
