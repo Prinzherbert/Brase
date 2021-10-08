@@ -1,6 +1,7 @@
 body{
     background-color: white;
     cursor: pointer;
+    overflow: hidden;
 }
 canvas{
     position: absolute;
@@ -51,19 +52,19 @@ canvas{
 #create{
     left: 10px;
     bottom: 10px;
-    background-image: url(Novo\ Post-it.png);
+    background-image: url(Assets/Novo\ Post-it.png);
     filter: hue-rotate(40deg);
 }
 #delete{
     left: calc(20px + 10vh);
     bottom: 10px;
-    background-image: url(Excluir\ Post-it.png);
+    background-image: url(Assets/Excluir\ Post-it.png);
     filter: hue-rotate(290deg);
 }
 #theme{
     right: 10px;
     bottom: 10px;
-    background-image: url(Dark\ Post-it.png);
+    background-image: url(Assets/Dark\ Post-it.png);
     filter: hue-rotate(240deg) brightness(0.8);
 }
 
@@ -87,7 +88,7 @@ canvas{
     outline: none;
     border: none;
     background-color: transparent;
-    background-image: url(Post-it.png);
+    background-image: url(Assets/Post-it.png);
     background-size: 100%;
     padding: 1em;
     text-align: center;
@@ -99,6 +100,6 @@ canvas{
     top: 10px;
     width: 10vh;
     height: 8vh;
-    background-image: url(Logo\ Brase.png);
+    background-image: url(Assets/Logo\ Brase.png);
     background-size: 100%;
 }

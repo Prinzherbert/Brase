@@ -319,7 +319,7 @@ function ChangeTheme(){                                                 // Muda 
             displayY.classList.remove('lightPan');
             displayX.classList.add('darkPan');
             displayY.classList.add('darkPan');
-            darkThemeSwitch.style.backgroundImage = "url('Light\ Post-it.png')";
+            darkThemeSwitch.style.backgroundImage = "url('Assets/Light\ Post-it.png')";
         } else {
             textColor = "#000000";
             gridColor = "#ececec";
@@ -328,7 +328,7 @@ function ChangeTheme(){                                                 // Muda 
             displayY.classList.remove('darkPan');
             displayX.classList.add('lightPan');
             displayY.classList.add('lightPan');
-            darkThemeSwitch.style.backgroundImage = "url('Dark\ Post-it.png')";
+            darkThemeSwitch.style.backgroundImage = "url('Assets/Dark\ Post-it.png')";
         }
         isThemeSwitchPossible = false;
         setTimeout(function(){isThemeSwitchPossible = !isThemeSwitchPossible}, 1000);         // Tempo de espera para a troca de tema (Impossibilita problemas com epilepsia)
