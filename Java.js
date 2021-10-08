@@ -1,50 +1,54 @@
-var body = document.body;
-var imageWidth = window.innerWidth;     //Tamanho do canvas
-var imageHeight = window.innerHeight;
+// Constantes
+const body = document.body;
 const postit = document.getElementById('postit');
-var canvas = null;                              // Variáveis nulas para inicialização e operação do canvas;
+const displayX = document.getElementById("x");      // Elementos que mostram as coordenadas atuais na tela
+const displayY = document.getElementById("y");
+const darkThemeSwitch = document.getElementById('theme');
+const createEditable = document.createElement('textarea');      // Elemento editável para escrever
+const minScale = 2;                                             // Valores mínimo e máximo de zoom
+const maxScale = 15;
+const lineLength = 18;                                          // Tamanho das linhas com separação de palavra
+const maxLineLength = 22;                           // Tamanho das linhas independentemenete da separação
+const maxLength = 130;
+const lineStep = 25;                                // Espaçamento entre as linhas
+const breakChar = "¢";                              // Caractere usado na quebra
+const highlightScaling = 2;                         // Aumento do tamanho do post-it ao selecionar
+const gridLimit = 64;                               // Parâmetros da grade de fundo
+const gridSize = 256;
+
+// Variáveis
+var imageWidth = window.innerWidth;                 //Tamanho do canvas
+var imageHeight = window.innerHeight;
+var canvas = null;                                  // Variáveis nulas para inicialização e operação do canvas;
 var ctx = null;
 var bounds = null;
-var boxArray = [];                              // Array onde vão ficar os elementos
-var selectedBox = null;
-var editBox = null;
-var panX = 0;                                   // "Pan" é o local do canvas infinito sendo mostrado na tela
+var postItArray = [];                                  // Array onde vão ficar os elementos
+var selectedPostIt = null;
+var editPostIt = null;
+var panX = 0;                                       // "Pan" é o local do canvas infinito sendo mostrado na tela
 var panY = 0;
-var mouseX = 0;                                 // Coordenadas do mouse
+var mouseX = 0;                                     // Coordenadas do mouse
 var mouseY = 0;
-var oldMouseX = 0;                              // Coordenadas anteriores do mouse
+var oldMouseX = 0;                                  // Coordenadas anteriores do mouse
 var oldMouseY = 0;
-var displayX = document.getElementById("x");    // Elementos que mostram as coordenadas atuais na tela
-var displayY = document.getElementById("y");
-var mouseHeld = false;                          // Detecta se o mouse continua apertado
-var isCreate = false;                           // Modo de criação de caixas
-var isDelete = false;                           // Modo de exclusão de caixas
-var scale = 5;                                  // Variável para manter contagem simples do zoom
-var zoom = 1;
-var minScale = 2;                               // Valores mínimo e máximo de zoom
-var maxScale = 15;
-var createEditable = document.createElement('textarea');
-var lineLength = 18;                                        // Tamanho das linhas com separação de palavra
-var maxLineLength = 22;                         // Tamanho das linhas independentemenete da separação
-var maxLength = 130;
-var postitSize = 200;
-var lineStep = 25;                              // Espaçamento entre as linhas
-var breakChar = "¢";                            // Caractere usado na quebra
-var breakCount = 0;                             // Contagem de caracteres para quebrar
-var tempText;                                   // Texto antes de ser quebrado
-var highlightScaling = 2;
-var gridLimit = 64;
-var gridSize = 256;
+var mouseHeld = false;                              // Detecta se o mouse continua apertado
+var isCreate = false;                               // Modo de criação de post-its
+var isDelete = false;                               // Modo de exclusão de post-its
+var scale = 5;                                      // Variável para manter contagem simples do zoom
+var zoom = 1;                                       // Nível de zoom atual (Possível fundir com scale?)
+var postitSize = 200;                               // Tamanho do post-it
+var breakCount = 0;                                 // Contagem de caracteres para quebrar
+var tempText;                                       // Texto antes de ser quebrado
 var isDarkTheme = false;
 var isThemeSwitchPossible = true;
-var darkThemeSwitch = document.getElementById('theme');
 
 // Paleta de cores
 var textColor = "#000000";
 var gridColor = "#ececec";
 var backgroundColor = "#f2f2f2";
 
-window.onload = function (){                                             // Inicialização da página
+// Inicialização da página
+window.onload = function (){
     body.addEventListener('wheel', checkScrollDirection);               // Permite detectar scroll
     canvas = document.getElementById("canvas");                         // Setup pro canvas
     canvas.width = imageWidth;
@@ -54,22 +58,24 @@ window.onload = function (){                                             // Inic
     ctx.textAlign = "center";
     ctx.font = "15px Arial";
     createEditable.id = "editable";
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Texto exemplo"]));      // Caixas incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Outra caixa"]));
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Caixa"]));
-    boxArray.push(new DraggableBox(Math.random() * 1500,Math.random() * 1000,postitSize,["Mais texto"]));
+    postItArray.push(new DraggablePostIt(Math.random() * 1500,Math.random() * 1000,postitSize,["Texto exemplo"]));      // post-its incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
+    postItArray.push(new DraggablePostIt(Math.random() * 1500,Math.random() * 1000,postitSize,["Outro post-it"]));
+    postItArray.push(new DraggablePostIt(Math.random() * 1500,Math.random() * 1000,postitSize,["Post-it"]));
+    postItArray.push(new DraggablePostIt(Math.random() * 1500,Math.random() * 1000,postitSize,["Mais texto"]));
     requestAnimationFrame(draw);
 }
 
-window.onunload = function(){                                           // Quando a janela não está sendo mostrada
+// Quando a janela não está sendo mostrada
+window.onunload = function(){
     canvas = null;
     ctx = null;
     bounds = null;
-    selectedBox = null;
-    boxArray = null;
+    selectedPostIt = null;
+    postItArray = null;
 }
 
-window.onresize = function(){                                           // Atualizando os parâmetros da inicialização caso a janela seja redimensionada
+// Atualizando os parâmetros da inicialização caso a janela seja redimensionada
+window.onresize = function(){
     imageWidth = window.innerWidth;                                     // Armazena o novo tamanho da janela e corrige a escala
     imageHeight = window.innerHeight;
     canvas.width = imageWidth;
@@ -79,65 +85,68 @@ window.onresize = function(){                                           // Atual
     requestAnimationFrame(draw);
 }
 
-window.onmousedown = function(e){                                       //O que acontece ao segurar o mouse
+// O que acontece ao segurar o mouse
+window.onmousedown = function(e){
     mouseHeld = true;
-    if (!selectedBox){
-        for (var i = boxArray.length - 1; i > -1; --i){
-            if (boxArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){           //Detectando se o mouse colide com algum elemento
-                selectedBox = boxArray[i];
-                selectedBox.isSelected = true;
+    if (!selectedPostIt){
+        for (var i = postItArray.length - 1; i > -1; --i){
+            if (postItArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){           //Detectando se o mouse colide com algum elemento
+                selectedPostIt = postItArray[i];
+                selectedPostIt.isSelected = true;
                 requestAnimationFrame(draw);
                 return;
             }
         }
-        if (editBox!=null){
+        if (editPostIt!=null){
             textEdit();
         }
     }
 }
 
-window.ondblclick = function(e){                                        // Executa com clique duplo
+// Executa com clique duplo
+window.ondblclick = function(e){
     if (isCreate == false){
-            if (!editBox){
-                for (var i = boxArray.length - 1; i > -1; --i){
-                    if (boxArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){   // Detectando se o mouse colide com algum elemento
+            if (!editPostIt){
+                for (var i = postItArray.length - 1; i > -1; --i){
+                    if (postItArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)){   // Detectando se o mouse colide com algum elemento
                         if(isDelete == false){
-                            editBox = boxArray[i];                                          // Isso muda o texto da caixa
+                            editPostIt = postItArray[i];                                          // Isso muda o texto do post-it
                             document.body.appendChild(createEditable);                      // Insere o elemento editável na página
-                            createEditable.style.filter = "hue-rotate(" + editBox.hue.toString() + "deg)";
+                            createEditable.style.filter = "hue-rotate(" + editPostIt.hue.toString() + "deg)";
                             createEditable.style.font = (zoom*15).toString() + "px Arial";
                             createEditable.style.fontWeight = "bold";
-                            createEditable.style.top = String((editBox.y-panY)*zoom)+"px";         // Coloca o elemento editável no mesmo local da caixa
-                            createEditable.style.left = String((editBox.x-panX)*zoom)+"px";
-                            createEditable.style.width = String(editBox.size*zoom)+"px";
-                            createEditable.style.height = String(editBox.size*zoom)+"px";
-                            createEditable.value = editBox.text.join(' ');                            // Coloca o mesmo texto da caixa no elemento editável
+                            createEditable.style.top = String((editPostIt.y-panY)*zoom)+"px";         // Coloca o elemento editável no mesmo local do post-it
+                            createEditable.style.left = String((editPostIt.x-panX)*zoom)+"px";
+                            createEditable.style.width = String(editPostIt.size*zoom)+"px";
+                            createEditable.style.height = String(editPostIt.size*zoom)+"px";
+                            createEditable.value = editPostIt.text.join(' ');                            // Coloca o mesmo texto do post-it no elemento editável
                         } else {
-                            boxArray.splice(i,1);                                           // Isso exclui a caixa do array
+                            postItArray.splice(i,1);                                           // Isso exclui o post-it do array
                         }
                         return;
                     }
                 }
             }
     } else {
-        boxArray.push(new DraggableBox((mouseX+panX),(mouseY+panY),postitSize,["Caixa teste"]));  // Isso cria uma nova caixa
+        postItArray.push(new DraggablePostIt((mouseX+panX),(mouseY+panY),postitSize,["Post-it teste"]));  // Isso cria um novo post-it
         requestAnimationFrame(draw);
     }
 }
 
-window.onmousemove = function(e){                                                           // O que acontece ao mover o mouse
+// O que acontece ao mover o mouse
+window.onmousemove = function(e){
     mouseX = (e.clientX - bounds.left)*(imageWidth/window.innerWidth);                      // Calculando a posição do mouse levando em conta resolução e zoom
     mouseY = (e.clientY - bounds.top)*(imageHeight/window.innerHeight);
     if (mouseHeld){
-        if (!selectedBox){
+        if (!selectedPostIt){
             panX += oldMouseX - mouseX;                                 // Mudando o local mostrado quando o mouse é arrastado sem colidir com um elemento
             panY += oldMouseY - mouseY;
             displayX.innerText = Math.round(panX);                      // Mostra as coordenadas atuais arredondadas no elemento específico
             displayY.innerText = Math.round(panY);
         } else {
             if (createEditable != document.activeElement){                  // Só executar caso o modo de edição não esteja ativa
-                selectedBox.x = mouseX - selectedBox.size * 0.5 + panX;    // Movendo o elemento quando o mouse está colidindo com ele
-                selectedBox.y = mouseY - selectedBox.size * 0.5 + panY;
+                selectedPostIt.x = mouseX - selectedPostIt.size * 0.5 + panX;    // Movendo o elemento quando o mouse está colidindo com ele
+                selectedPostIt.y = mouseY - selectedPostIt.size * 0.5 + panY;
             }
         }
     }
@@ -148,16 +157,16 @@ window.onmousemove = function(e){                                               
 
 window.onmouseup = function(e){                                         // Executado ao soltar o mouse
     mouseHeld = false;
-    if (selectedBox){
-        selectedBox.isSelected = false;                                 // Remove a seleção da caixa caso se aplique
-        selectedBox = null;
+    if (selectedPostIt){
+        selectedPostIt.isSelected = false;                                 // Remove a seleção da post-it caso se aplique
+        selectedPostIt = null;
         requestAnimationFrame(draw);
     }
 }
 
 window.onkeydown = function(e){
     if (e.key == "Enter") {
-        if (editBox!=null){
+        if (editPostIt!=null){
             textEdit();
         }
     }
@@ -190,28 +199,28 @@ function textEdit(){
     }
     breakIncoming = false;
     breakCount = 0;
-    editBox.text = tempText.split(breakChar);
+    editPostIt.text = tempText.split(breakChar);
     createEditable.remove();                                        // Exclui o elemento editável
-    editBox = null;                                                 // Tira a caixa do modo de edição
+    editPostIt = null;                                                 // Tira o post-it do modo de edição
 }
 
 function draw(){                                                        // Renderização do canvas (só renderiza elementos visíveis)
     ctx.fillStyle = backgroundColor;                                    // Cor do background do canvas
     ctx.fillRect(0,0,imageWidth,imageHeight);
     drawGrid();
-    var box = null;
+    var postIt = null;
     var xMin = 0;
     var xMax = 0;
     var yMin = 0;
     var yMax = 0;
-    for (var i=0; i<boxArray.length; ++i){
-        box = boxArray[i];
-        xMin = box.x - panX - 2000;
-        xMax = box.x + box.size - panX;
-        yMin = box.y - panY;
-        yMax = box.y + box.size - panY;
-        if (xMax>0 && xMin<imageWidth && yMax>0 && yMin<imageHeight){   // Detecta e renderiza apenas as caixas que aparecem na tela
-            box.draw();
+    for (var i=0; i<postItArray.length; ++i){
+        postIt = postItArray[i];
+        xMax = postIt.x + postIt.size - panX;
+        xMin = postIt.x - panX - 2000;
+        yMin = postIt.y - panY;
+        yMax = postIt.y + postIt.size - panY;
+        if (xMax>0 && xMin<imageWidth && yMax>0 && yMin<imageHeight){   // Detecta e renderiza apenas os post-its que aparecem na tela
+            postIt.draw();
         }
     }
 }
@@ -264,7 +273,7 @@ function checkScrollDirection(event){                                  // Aplica
     displayX.innerText = Math.round(panX);                                                  // Mostra as coordenadas atuais arredondadas no elemento específico
     displayY.innerText = Math.round(panY);
     createEditable.remove();                                            // Exclui o elemento editável
-    editBox = null;                                                     // Tira a caixa do modo de edição
+    editPostIt = null;                                                     // Tira o post-it do modo de edição
     canvas.width = imageWidth;                                          // Atualiza as dimensões e texto do canvas para se ajustarem ao novo zoom
     canvas.height = imageHeight;
     ctx.textAlign = "center";
@@ -279,7 +288,7 @@ function checkScrollDirectionIsUp(event){                               // Detec
     return event.deltaY < 0;                                            // Retorna false se o comando de scroll for negativo
 }
 
-function CreateBoxMode(){                                                   // Função para entrar no modo de criação de caixas
+function CreatePostItMode(){                                                   // Função para entrar no modo de criação de post-its
     isCreate = !isCreate;
     isDelete = false;
     if(isCreate){
@@ -289,7 +298,7 @@ function CreateBoxMode(){                                                   // F
     }
 }
 
-function DeleteBoxMode(){                                                   // Função para entrar no modo de exclusão de caixas
+function DeletePostItMode(){                                                   // Função para entrar no modo de exclusão de post-its
     isDelete = !isDelete;
     isCreate = false;
     if(isDelete){
@@ -328,17 +337,17 @@ function ChangeTheme(){                                                 // Muda 
     requestAnimationFrame(draw);
 }
 
-class DraggableBox {                                                    // Classe para as caixas arrastáveis (O VSCode transformou em uma classe automaticamente, lembrar de pesquisar sobre em etapas futuras)
+class DraggablePostIt {                                                    // Classe para os post-its arrastáveis (O VSCode transformou em uma classe automaticamente, lembrar de pesquisar sobre em etapas futuras)
     constructor(x, y, size, text) {
-        this.x = x;                                                     // Coordenadas da caixa
+        this.x = x;                                                     // Coordenadas do post-it
         this.y = y;
-        this.size = size;                                               // Tamanho da caixa
-        this.text = text;                                               // Conteúdo da caixa
+        this.size = size;                                               // Tamanho do post-it
+        this.text = text;                                               // Conteúdo do post-it
         this.hue = Math.random() * 360;                                 // Variação de cor nos post-its
-        this.isSelected = false;                                        // Seleção e edit da caixa
+        this.isSelected = false;                                        // Seleção e edit do post-it
     }
     isCollidingWidthPoint(x, y) {
-        return (x > this.x && x < this.x + this.size) && (y > this.y && y < this.y + this.size);         // Retorna true caso as coordenadas recebidas coincidam com as coordenadas ocupadas por uma caixa
+        return (x > this.x && x < this.x + this.size) && (y > this.y && y < this.y + this.size);         // Retorna true caso as coordenadas recebidas coincidam com as coordenadas ocupadas por um post-it
     }
     drag(newX, newY) {
         this.x = newX - this.size * 0.5;
@@ -346,17 +355,17 @@ class DraggableBox {                                                    // Class
     }
     draw() {
         ctx.filter = "hue-rotate(" + this.hue.toString() + "deg)";      // Adicionando filtro de cor
-        if (this.isSelected && editBox == null) {     
-            ctx.drawImage(postit, this.x - panX - (5*highlightScaling), this.y - panY - (5*highlightScaling), this.size + (5*highlightScaling*2), this.size + (5*highlightScaling*2));       // Preenche a caixa com a cor de seleção
+        if (this.isSelected && editPostIt == null) {     
+            ctx.drawImage(postit, this.x - panX - (5*highlightScaling), this.y - panY - (5*highlightScaling), this.size + (5*highlightScaling*2), this.size + (5*highlightScaling*2));       // Renderiza a imagem do post-it em destaque
             ctx.font = "bold 17px Arial";
         } else {
-            ctx.drawImage(postit, this.x - panX, this.y - panY, this.size, this.size);                                            // Preenche a caixa com a cor padrão
+            ctx.drawImage(postit, this.x - panX, this.y - panY, this.size, this.size);                                            // Renderiza a imagem do post-it padrão
             ctx.font = "bold 15px Arial";
         }
         ctx.filter = "none";                                            // Tirando filtro de cor
         ctx.fillStyle = textColor;                                                                                          // Cor do texto
         for (var i=0; i<this.text.length; i++){
-            ctx.fillText(this.text[i], this.x + this.size * 0.5 - panX, (this.y + this.size * 0.5 - panY) + (i*lineStep) - ((this.text.length*lineStep/2)-(1*lineStep/2)), this.size);           // Preenche a caixa com texto (multilinha)
+            ctx.fillText(this.text[i], this.x + this.size * 0.5 - panX, (this.y + this.size * 0.5 - panY) + (i*lineStep) - ((this.text.length*lineStep/2)-(1*lineStep/2)), this.size);           // Preenche o post-it com texto (multilinha)
         }
     }
 }
