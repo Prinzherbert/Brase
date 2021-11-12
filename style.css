@@ -80,4 +80,34 @@ body{
   border-radius: 30px 30px 30px 30px;
   
 }
- 
+.button {
+	
+  background-color: #008CBA; 
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+border-radius: 8px;
+}
+
+.defaultTextBox {
+  padding: 0;
+  height: 40px;
+  width: 265px;
+  position: relative;
+  left: 0;
+  outline: none;
+  border: 1px solid #cdcdcd;
+  border-color: rgb(19, 99, 156);
+  background-color: white;
+  font-size: 16px;
+  border-radius: 30px 30px 30px 30px;
+
+}
+.advancedSearchTextbox {
+  width: 526px;
+  margin-right: -4px;
+}
