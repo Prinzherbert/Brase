@@ -30,6 +30,25 @@
     <br>
     <p align="center"> Se tiver interesse em saber mais sobre a metodologia ágil Design Thinking, que é utili-<br>zada neste site, e também sobre o site como: Qual é o seu objetivo? , Quem são os<br> criadores? e outras informações. Entre na aba <a href="Site About.html"><font color="blue"><u>About!</u></font></a></p>
   </div>
+  
+  <div id="chatbot" class="site">
+    <script>
+  window.watsonAssistantChatOptions = {
+      integrationID: "615ecbb4-2c81-42db-886e-5f980bb38a3f", // The ID of this integration.
+      region: "us-south", // The region your integration is hosted in.
+      serviceInstanceID: "b05b9e99-2f06-412d-9958-6057bd05de58", // The ID of your service instance.
+      onLoad: function(instance) { 
+        instance.updateLocale('pt-br');
+        instance.render(); }
+    };
+  setTimeout(function(){
+    const t=document.createElement('script');
+    t.src="https://web-chat.global.assistant.watson.appdomain.cloud/versions/" + (window.watsonAssistantChatOptions.clientVersion || 'latest') + "/WatsonAssistantChatEntry.js"
+    document.head.appendChild(t);
+  });
+</script>
+  </div>
+    
 
   <div id="divProject" class="site">
     <img align="center" src="Assets/Logo Brase1.png" width="310" height="290">
