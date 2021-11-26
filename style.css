@@ -116,3 +116,8 @@ body {
 .pageNav{
   cursor: pointer;
 }
+
+#chatbot{
+  width: 0px;
+  height: 0px;
+}
