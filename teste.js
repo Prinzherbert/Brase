@@ -1,4 +1,5 @@
 const socket = new WebSocket('ws://localhost:8080');
+var text = document.getElementById("text");
 
 socket.onopen = ({e}) => {
     console.log("Conectado");
@@ -10,4 +11,9 @@ socket.onmessage = ({data}) => {
 
 document.querySelector('button').onclick = () => {
     socket.send('Oi');
+}
+
+function updateText(){
+    text = document.getElementById("text");
+    socket.send(text.value);
 }
