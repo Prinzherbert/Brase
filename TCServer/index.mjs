@@ -1,5 +1,5 @@
-import WebSocket from 'ws';
-const server = new WebSocket.server({port:'8080'});
+import WebSocket, {WebSocketServer} from 'ws';
+const server = new WebSocketServer({port:'8080'});
 
 server.on('connection', socket => {
     socket.on('message', message => {
