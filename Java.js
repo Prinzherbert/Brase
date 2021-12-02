@@ -25,7 +25,7 @@ var ctx = null;
 var bounds = null;
 var postItArray = []; // Array onde vão ficar os elementos
 var selectedPostIt = null;
-var selectPostItIndex = null;
+var postItIndex = null;
 var editPostIt = null;
 var panX = 0; // "Pan" é o local do canvas infinito sendo mostrado na tela
 var panY = 0;
@@ -51,12 +51,24 @@ var backgroundColor = "#f2f2f2";
 
 socket.onmessage = ({data}) => { // Quando receber uma mensagem do servidor
   let info = JSON.parse(data);  // Transformar a mensagem em um array novamente
-  if(info[0] == "text"){
+  switch (info[0]){
+  case "text":
     postItArray[info[1]].text = info[2];
-  }
-  if(info[0] == "move"){
+    break;
+  case "move":
     postItArray[info[1]].x = info[2];
     postItArray[info[1]].y = info[3];
+    break;
+  case "delete":
+    postItArray.splice(info[1], 1);
+    break;
+  case "create":
+    postItArray.push(
+      new DraggablePostIt(info[1], info[2], postitSize, [
+        "Novo post-it",
+      ])
+    );
+    break;
   }
   requestAnimationFrame(draw);
 }
@@ -113,7 +125,7 @@ window.onunload = function () {
   ctx = null;
   bounds = null;
   selectedPostIt = null;
-  selectedPostItIndex = null;
+  postItIndex = null;
   postItArray = null;
 };
 
@@ -136,7 +148,7 @@ window.onmousedown = function (e) {
       if (postItArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)) {
         //Detectando se o mouse colide com algum elemento
         selectedPostIt = postItArray[i];
-        selectedPostItIndex = i;
+        postItIndex = i;
         selectedPostIt.isSelected = true;
         requestAnimationFrame(draw);
         return;
@@ -174,6 +186,8 @@ window.ondblclick = function (e) {
             createEditable.value = editPostIt.text.join(" "); // Coloca o mesmo texto do post-it no elemento editável
           } else {
             postItArray.splice(i, 1); // Isso exclui o post-it do array
+            postItIndex = i;
+            socket.send(JSON.stringify(["delete", postItIndex]))
           }
           return;
         }
@@ -182,9 +196,10 @@ window.ondblclick = function (e) {
   } else {
     postItArray.push(
       new DraggablePostIt(mouseX + panX, mouseY + panY, postitSize, [
-        "Post-it teste",
+        "Novo post-it",
       ])
     ); // Isso cria um novo post-it
+    socket.send(JSON.stringify(["create", mouseX + panX, mouseY + panY]));
     requestAnimationFrame(draw);
   }
 };
@@ -204,7 +219,7 @@ window.onmousemove = function (e) {
         // Só executar caso o modo de edição não esteja ativo
         selectedPostIt.x = mouseX - selectedPostIt.size * 0.5 + panX; // Movendo o elemento quando o mouse está colidindo com ele
         selectedPostIt.y = mouseY - selectedPostIt.size * 0.5 + panY;
-        socket.send(JSON.stringify(["move", selectedPostItIndex, selectedPostIt.x, selectedPostIt.y]))
+        socket.send(JSON.stringify(["move", postItIndex, selectedPostIt.x, selectedPostIt.y]))
       }
     }
   }
@@ -219,7 +234,7 @@ window.onmouseup = function (e) {
   if (selectedPostIt) {
     selectedPostIt.isSelected = false; // Remove a seleção da post-it caso se aplique
     selectedPostIt = null;
-    selectedPostItIndex = null;
+    postItIndex = null;
     requestAnimationFrame(draw);
   }
 };
