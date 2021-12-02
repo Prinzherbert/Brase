@@ -15,6 +15,7 @@ const breakChar = "¢"; // Caractere usado na quebra
 const highlightScaling = 2; // Aumento do tamanho do post-it ao selecionar
 const gridLimit = 64; // Parâmetros da grade de fundo
 const gridSize = 256;
+const socket = new WebSocket('ws://localhost:8080'); // WebSocket para conexão com o servidor
 
 // Variáveis
 var imageWidth = window.innerWidth; //Tamanho do canvas
@@ -24,6 +25,7 @@ var ctx = null;
 var bounds = null;
 var postItArray = []; // Array onde vão ficar os elementos
 var selectedPostIt = null;
+var selectPostItIndex = null;
 var editPostIt = null;
 var panX = 0; // "Pan" é o local do canvas infinito sendo mostrado na tela
 var panY = 0;
@@ -46,6 +48,18 @@ var isThemeSwitchPossible = true;
 var textColor = "#000000";
 var gridColor = "#ececec";
 var backgroundColor = "#f2f2f2";
+
+socket.onmessage = ({data}) => { // Quando receber uma mensagem do servidor
+  let info = JSON.parse(data);  // Transformar a mensagem em um array novamente
+  if(info[0] == "text"){
+    postItArray[info[1]].text = info[2];
+  }
+  if(info[0] == "move"){
+    postItArray[info[1]].x = info[2];
+    postItArray[info[1]].y = info[3];
+  }
+  requestAnimationFrame(draw);
+}
 
 // Inicialização da página
 window.onload = function () {
@@ -99,6 +113,7 @@ window.onunload = function () {
   ctx = null;
   bounds = null;
   selectedPostIt = null;
+  selectedPostItIndex = null;
   postItArray = null;
 };
 
@@ -121,6 +136,7 @@ window.onmousedown = function (e) {
       if (postItArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)) {
         //Detectando se o mouse colide com algum elemento
         selectedPostIt = postItArray[i];
+        selectedPostItIndex = i;
         selectedPostIt.isSelected = true;
         requestAnimationFrame(draw);
         return;
@@ -143,6 +159,7 @@ window.ondblclick = function (e) {
           // Detectando se o mouse colide com algum elemento
           if (isDelete == false) {
             editPostIt = postItArray[i]; // Isso muda o texto do post-it
+            editPostItIndex = i;
             document.body.appendChild(createEditable); // Insere o elemento editável na página
             createEditable.style.filter =
               "hue-rotate(" + editPostIt.hue.toString() + "deg)";
@@ -184,9 +201,10 @@ window.onmousemove = function (e) {
       displayY.innerText = Math.round(panY);
     } else {
       if (createEditable != document.activeElement) {
-        // Só executar caso o modo de edição não esteja ativa
+        // Só executar caso o modo de edição não esteja ativo
         selectedPostIt.x = mouseX - selectedPostIt.size * 0.5 + panX; // Movendo o elemento quando o mouse está colidindo com ele
         selectedPostIt.y = mouseY - selectedPostIt.size * 0.5 + panY;
+        socket.send(JSON.stringify(["move", selectedPostItIndex, selectedPostIt.x, selectedPostIt.y]))
       }
     }
   }
@@ -201,6 +219,7 @@ window.onmouseup = function (e) {
   if (selectedPostIt) {
     selectedPostIt.isSelected = false; // Remove a seleção da post-it caso se aplique
     selectedPostIt = null;
+    selectedPostItIndex = null;
     requestAnimationFrame(draw);
   }
 };
@@ -249,7 +268,9 @@ function textEdit() {
   breakCount = 0;
   editPostIt.text = tempText.split(breakChar);
   createEditable.remove(); // Exclui o elemento editável
+  socket.send(JSON.stringify(["text", editPostItIndex, editPostIt.text])); // Envia as alterações para o servidor em forma de string
   editPostIt = null; // Tira o post-it do modo de edição
+  editPostItIndex = null;
 }
 
 function draw() {
