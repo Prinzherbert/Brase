@@ -15,7 +15,7 @@ const breakChar = "¢"; // Caractere usado na quebra
 const highlightScaling = 2; // Aumento do tamanho do post-it ao selecionar
 const gridLimit = 64; // Parâmetros da grade de fundo
 const gridSize = 256;
-const socket = new WebSocket('ws://localhost:8080'); // WebSocket para conexão com o servidor
+const socket = new WebSocket('wss://brase-node.herokuapp.com'); // WebSocket para conexão com o servidor
 
 // Variáveis
 var imageWidth = window.innerWidth; //Tamanho do canvas
@@ -54,9 +54,7 @@ function isServerReady(){setTimeout(function(){ // Esperar pela conexão com o s
     socket.send(JSON.stringify(["connect"]));
   } else {
     isServerReady();
-  }
-    console.log("Connecting...")
-  }, 200);
+  }}, 200);
 }
 
 socket.onmessage = ({data}) => { // Quando receber uma mensagem do servidor
@@ -66,18 +64,18 @@ socket.onmessage = ({data}) => { // Quando receber uma mensagem do servidor
     postItArray[info[1]].text = info[2];
     break;
   case "move":
-    postItArray[info[1]].x = info[2];
-    postItArray[info[1]].y = info[3];
+    if (selectedPostIt == null){
+      postItArray[info[1]].x = info[2];
+      postItArray[info[1]].y = info[3];
+    };
     break;
   case "array":
     postItArray = [];
-    console.log(info);
     for(let i=0; i < info[1].length; i++){
       postItArray.push(
         new DraggablePostIt(info[1][i].x, info[1][i].y, info[1][i].size, info[1][i].text, info[1][i].hue)
       );
     };
-    console.log(postItArray);
     break;
   }
   requestAnimationFrame(draw);
@@ -254,7 +252,7 @@ function textEdit() {
     }
     if (breakCount >= maxLineLength) {
       // Depois de certo número de caracteres, quebra independente da separação de palavras
-      tempText = replaceAt(tempText, i, breakChar);
+      tempText = tempText.slice(0, i) + "-" + breakChar + tempText.slice(i);
       breakIncoming = false;
       breakCount = 0;
     }

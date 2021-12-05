@@ -1,8 +1,25 @@
-import WebSocket, {WebSocketServer} from 'ws';
-const server = new WebSocketServer({port: (process.env.PORT || '8080')});
-var firstStart = true;
+import {WebSocketServer} from 'ws';
+import http from 'http';
+import { response } from 'express';
+const porta = process.env.PORT || '8080';
+
+var htserver = http.createServer(function(request, response) {
+    response.writeHead(200);
+    response.write('Hello World!');
+    response.end();
+});
+htserver.listen(porta, function() {
+});
+var server = new WebSocketServer({
+    server: htserver,
+    autoAcceptConnections: true
+});
+
 var postItArray;
 
+server.on('open', open => {
+    console.log("Funcionando");
+});
 server.on('connection', socket => {
     socket.on('message', message => {
         let mensagem = JSON.parse(message);
@@ -14,6 +31,7 @@ server.on('connection', socket => {
         } else {
             server.broadcast(JSON.stringify(mensagem), server);
         }
+        server.broadcast("a");
     });
 });
 
