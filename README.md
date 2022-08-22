@@ -1,0 +1,3 @@
+# Brase - README Temporário
+Para fazer mudanças, crie uma branch nova (a partir de development), trabalhe nela e dê merge em development abrindo um pull request especificando as mudanças feitas.
+A branch development é pra ser testada localmente, eu (David) vou configurar isso mais tarde. Assim que tudo estiver rodando localmente de maneira estável, abra um pull request para a branch master e espere alguém revisar o código. A branch master recebe deploy automaticamente no heroku, é só esperar um pouco e abrir o link https://brase-node.herokuapp.com.
