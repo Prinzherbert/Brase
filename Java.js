@@ -15,6 +15,7 @@ const breakChar = "¢"; // Caractere usado na quebra
 const highlightScaling = 2; // Aumento do tamanho do post-it ao selecionar
 const gridLimit = 64; // Parâmetros da grade de fundo
 const gridSize = 256;
+const socket = new WebSocket('wss://brase-node.herokuapp.com'); // WebSocket para conexão com o servidor
 
 // Variáveis
 var imageWidth = window.innerWidth; //Tamanho do canvas
@@ -24,6 +25,7 @@ var ctx = null;
 var bounds = null;
 var postItArray = []; // Array onde vão ficar os elementos
 var selectedPostIt = null;
+var postItIndex = null;
 var editPostIt = null;
 var panX = 0; // "Pan" é o local do canvas infinito sendo mostrado na tela
 var panY = 0;
@@ -47,6 +49,38 @@ var textColor = "#000000";
 var gridColor = "#ececec";
 var backgroundColor = "#f2f2f2";
 
+function isServerReady(){setTimeout(function(){ // Esperar pela conexão com o servidor
+  if (socket.readyState == 1){
+    socket.send(JSON.stringify(["connect"]));
+  } else {
+    isServerReady();
+  }}, 200);
+}
+
+socket.onmessage = ({data}) => { // Quando receber uma mensagem do servidor
+  let info = JSON.parse(data);  // Transformar a mensagem em um array novamente
+  switch (info[0]){ // Tipo de informação recebida
+  case "text":
+    postItArray[info[1]].text = info[2];
+    break;
+  case "move":
+    if (selectedPostIt == null){
+      postItArray[info[1]].x = info[2];
+      postItArray[info[1]].y = info[3];
+    };
+    break;
+  case "array":
+    postItArray = [];
+    for(let i=0; i < info[1].length; i++){
+      postItArray.push(
+        new DraggablePostIt(info[1][i].x, info[1][i].y, info[1][i].size, info[1][i].text, info[1][i].hue)
+      );
+    };
+    break;
+  }
+  requestAnimationFrame(draw);
+}
+
 // Inicialização da página
 window.onload = function () {
   body.addEventListener("wheel", checkScrollDirection); // Permite detectar scroll
@@ -58,38 +92,7 @@ window.onload = function () {
   ctx.textAlign = "center";
   ctx.font = "15px Arial";
   createEditable.id = "editable";
-  postItArray.push(
-    new DraggablePostIt(
-      Math.random() * 1500,
-      Math.random() * 1000,
-      postitSize,
-      ["Texto exemplo"]
-    )
-  ); // post-its incluidas inicialmente (Para propósito de testes apenas, excluir nas etapas finais)
-  postItArray.push(
-    new DraggablePostIt(
-      Math.random() * 1500,
-      Math.random() * 1000,
-      postitSize,
-      ["Outro post-it"]
-    )
-  );
-  postItArray.push(
-    new DraggablePostIt(
-      Math.random() * 1500,
-      Math.random() * 1000,
-      postitSize,
-      ["Post-it"]
-    )
-  );
-  postItArray.push(
-    new DraggablePostIt(
-      Math.random() * 1500,
-      Math.random() * 1000,
-      postitSize,
-      ["Mais texto"]
-    )
-  );
+  isServerReady();
   requestAnimationFrame(draw);
 };
 
@@ -99,6 +102,7 @@ window.onunload = function () {
   ctx = null;
   bounds = null;
   selectedPostIt = null;
+  postItIndex = null;
   postItArray = null;
 };
 
@@ -121,6 +125,7 @@ window.onmousedown = function (e) {
       if (postItArray[i].isCollidingWidthPoint(mouseX + panX, mouseY + panY)) {
         //Detectando se o mouse colide com algum elemento
         selectedPostIt = postItArray[i];
+        postItIndex = i;
         selectedPostIt.isSelected = true;
         requestAnimationFrame(draw);
         return;
@@ -143,6 +148,7 @@ window.ondblclick = function (e) {
           // Detectando se o mouse colide com algum elemento
           if (isDelete == false) {
             editPostIt = postItArray[i]; // Isso muda o texto do post-it
+            editPostItIndex = i;
             document.body.appendChild(createEditable); // Insere o elemento editável na página
             createEditable.style.filter =
               "hue-rotate(" + editPostIt.hue.toString() + "deg)";
@@ -157,6 +163,8 @@ window.ondblclick = function (e) {
             createEditable.value = editPostIt.text.join(" "); // Coloca o mesmo texto do post-it no elemento editável
           } else {
             postItArray.splice(i, 1); // Isso exclui o post-it do array
+            postItIndex = i;
+            socket.send(JSON.stringify(["array", postItArray]));
           }
           return;
         }
@@ -165,9 +173,10 @@ window.ondblclick = function (e) {
   } else {
     postItArray.push(
       new DraggablePostIt(mouseX + panX, mouseY + panY, postitSize, [
-        "Post-it teste",
-      ])
+        "Novo post-it",
+      ], Math.random() * 360)
     ); // Isso cria um novo post-it
+    socket.send(JSON.stringify(["array", postItArray]));
     requestAnimationFrame(draw);
   }
 };
@@ -184,9 +193,10 @@ window.onmousemove = function (e) {
       displayY.innerText = Math.round(panY);
     } else {
       if (createEditable != document.activeElement) {
-        // Só executar caso o modo de edição não esteja ativa
+        // Só executar caso o modo de edição não esteja ativo
         selectedPostIt.x = mouseX - selectedPostIt.size * 0.5 + panX; // Movendo o elemento quando o mouse está colidindo com ele
         selectedPostIt.y = mouseY - selectedPostIt.size * 0.5 + panY;
+        socket.send(JSON.stringify(["move", postItIndex, selectedPostIt.x, selectedPostIt.y]));
       }
     }
   }
@@ -201,6 +211,8 @@ window.onmouseup = function (e) {
   if (selectedPostIt) {
     selectedPostIt.isSelected = false; // Remove a seleção da post-it caso se aplique
     selectedPostIt = null;
+    postItIndex = null;
+    socket.send(JSON.stringify(["array", postItArray]));
     requestAnimationFrame(draw);
   }
 };
@@ -240,7 +252,7 @@ function textEdit() {
     }
     if (breakCount >= maxLineLength) {
       // Depois de certo número de caracteres, quebra independente da separação de palavras
-      tempText = replaceAt(tempText, i, breakChar);
+      tempText = tempText.slice(0, i) + "-" + breakChar + tempText.slice(i);
       breakIncoming = false;
       breakCount = 0;
     }
@@ -249,7 +261,9 @@ function textEdit() {
   breakCount = 0;
   editPostIt.text = tempText.split(breakChar);
   createEditable.remove(); // Exclui o elemento editável
+  socket.send(JSON.stringify(["text", editPostItIndex, editPostIt.text])); // Envia as alterações para o servidor em forma de string
   editPostIt = null; // Tira o post-it do modo de edição
+  editPostItIndex = null;
 }
 
 function draw() {
@@ -400,12 +414,12 @@ function ChangeTheme() {
 
 class DraggablePostIt {
   // Classe para os post-its arrastáveis (O VSCode transformou em uma classe automaticamente, lembrar de pesquisar sobre em etapas futuras)
-  constructor(x, y, size, text) {
+  constructor(x, y, size, text, hue) {
     this.x = x; // Coordenadas do post-it
     this.y = y;
     this.size = size; // Tamanho do post-it
     this.text = text; // Conteúdo do post-it
-    this.hue = Math.random() * 360; // Variação de cor nos post-its
+    this.hue = hue; // Variação de cor nos post-its
     this.isSelected = false; // Seleção e edit do post-it
   }
   isCollidingWidthPoint(x, y) {
