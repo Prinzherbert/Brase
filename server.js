@@ -1,16 +1,16 @@
 'use strict';
 
 const express = require('express');
-const { Server } = require('ws');
+const { WebSocketServer } = require('ws');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const INDEX = '/index.html';
 
 const server = express()
   .use(express.static(__dirname))
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
-const wss = new Server({ server });
+const wss = new WebSocketServer({ server: server, autoAcceptConnections: true });
 
 var postItArray;
 
