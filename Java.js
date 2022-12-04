@@ -15,7 +15,7 @@ const breakChar = "¢"; // Caractere usado na quebra
 const highlightScaling = 2; // Aumento do tamanho do post-it ao selecionar
 const gridLimit = 64; // Parâmetros da grade de fundo
 const gridSize = 256;
-const socket = new WebSocket('wss://brase-node.herokuapp.com'); // WebSocket para conexão com o servidor
+const socket = new WebSocket('ws://localhost:8080'); // WebSocket para conexão com o servidor
 
 // Variáveis
 var imageWidth = window.innerWidth; //Tamanho do canvas
@@ -72,6 +72,9 @@ socket.onmessage = ({data}) => { // Quando receber uma mensagem do servidor
   case "array":
     postItArray = [];
     for(let i=0; i < info[1].length; i++){
+      if(typeof info[1][i].text === 'string'){
+        info[1][i].text = formatText(info[1][i].text)
+      }
       postItArray.push(
         new DraggablePostIt(info[1][i].x, info[1][i].y, info[1][i].size, info[1][i].text, info[1][i].hue)
       );
@@ -79,6 +82,34 @@ socket.onmessage = ({data}) => { // Quando receber uma mensagem do servidor
     break;
   }
   requestAnimationFrame(draw);
+}
+
+function formatText(tempText) {
+  tempText = tempText.substring(0, maxLength);
+  for (var i = 0; i < tempText.length; i++) {
+    // Loop para quebrar as linhas do texto
+    let breakIncoming = false;
+    let currentChar = tempText.charAt(i);
+    breakCount++;
+    if (breakCount >= lineLength) {
+      breakIncoming = true;
+    }
+    if (breakIncoming && currentChar == " ") {
+      // Só quebra em separação de palavras
+      tempText = replaceAt(tempText, i, breakChar);
+      breakIncoming = false;
+      breakCount = 0;
+    }
+    if (breakCount >= maxLineLength) {
+      // Depois de certo número de caracteres, quebra independente da separação de palavras
+      tempText = tempText.slice(0, i) + "-" + breakChar + tempText.slice(i);
+      breakIncoming = false;
+      breakCount = 0;
+    }
+  }
+  breakIncoming = false;
+  breakCount = 0;
+  return tempText.split(breakChar);
 }
 
 // Inicialização da página
